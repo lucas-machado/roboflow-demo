@@ -39,7 +39,9 @@ export default function App() {
       <h1>Robloflow Training Lab</h1>
       <p>Active Detections: </p>
       
-      <DetectionCard data={sampleDetection} />
+      {detectionList.map((item, index) => (
+        <DetectionCard key={index} data={item} />
+      ))}
 
     </main>
   )
