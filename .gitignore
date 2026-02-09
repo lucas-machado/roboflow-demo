@@ -1,6 +1,34 @@
-venv/
-.venv/
-__pycache__/
+# Next.js
+front/.next/
+front/node_modules/
+front/dist/
+front/build/
+front/.env*.local
+
+# Vite (sobras se houver)
+front/dist-ssr/
+front/stats.html
+
+# Python
+back/venv/
+back/.venv/
+back/__pycache__/
+back/*.py[cod]
+back/.*_cache/
+back/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Sistema/Editores
 .DS_Store
-.env
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Outros
 .terraform/

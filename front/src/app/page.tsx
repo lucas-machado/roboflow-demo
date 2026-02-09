@@ -1,14 +1,15 @@
-import './App.css'
+"use client";
+
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 interface Detection {
   label: string;
   confidence: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }
 
 interface DetectionCardProps {
@@ -20,15 +21,18 @@ function DetectionCard({ data }: DetectionCardProps) {
     <div style={{ border: "1px solid #4A90E2", padding: "15px", borderRadius: "10px", margin: "10px" }}>
       <h3>Object: {data.label}</h3>
       <p>Confidence: {data.confidence}</p>
-      <p>X: {data.x} Y: {data.y}</p>      
-      <p>Width: {data.width} Height: {data.height}</p>
+      {data.x !== undefined && data.y !== undefined && (
+        <p>X: {data.x} Y: {data.y}</p>
+      )}
+      {data.width !== undefined && data.height !== undefined && (
+        <p>Width: {data.width} Height: {data.height}</p>
+      )}
     </div>
   )
 }
 
-export default function App() {
+export default function Home() {
   const [error, setError] = useState<string | null>(null);
-
   const [detections, setDetections] = useState<Detection[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +50,6 @@ export default function App() {
   useEffect(() => {
     fetchDetections();
   }, [])
-
 
   const [newLabel, setNewLabel] = useState<string>("");
 
@@ -78,23 +81,22 @@ export default function App() {
   }
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length == 0) {
+    if (event.target.files && event.target.files.length === 0) {
       return;
     }
-
     setSelectedFile(event.target.files?.[0] || null)
   }
 
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
-
   useEffect(() => {
-    if (!selectedFile) { return; }
-        
+    if (!selectedFile) {
+      setPreviewUrl(undefined);
+      return;
+    }
     const url = URL.createObjectURL(selectedFile)
     setPreviewUrl(url);
-  
     return () => URL.revokeObjectURL(url);
   }, [selectedFile]);
 
@@ -119,7 +121,7 @@ export default function App() {
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
-      }      
+      }
     } catch (error) {
       const message = (error as Error).message || 'An unknown error occurred';
       console.error('Error uploading file:', message);
@@ -128,66 +130,79 @@ export default function App() {
   }
 
   return (
-    <main style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>Roboflow Training Lab</h1>
+    <main style={{ 
+      padding: "20px", 
+      fontFamily: "sans-serif", 
+      maxWidth: "800px", 
+      margin: "0 auto", 
+      display: "flex", 
+      flexDirection: "column", 
+      alignItems: "center" 
+    }}>
+      <h1 style={{ textAlign: "center" }}>Roboflow Training Lab</h1>
 
-      {/* 🚨 conditional rendering for the error message */}
       {error && (
-        <div style={{ 
-          backgroundColor: "#fee2e2", 
-          color: "#b91c1c", 
-          padding: "10px", 
-          borderRadius: "5px", 
+        <div style={{
+          backgroundColor: "#fee2e2",
+          color: "#b91c1c",
+          padding: "10px",
+          borderRadius: "5px",
           marginBottom: "20px",
-          border: "1px solid #f87171" 
+          border: "1px solid #f87171",
+          width: "100%"
         }}>
           <strong>⚠️ Error:</strong> {error}
         </div>
       )}
 
-      <p>Active Detections: </p>
+      <p style={{ width: "100%", textAlign: "left" }}>Active Detections: </p>
       
-      {detections.map((item, index) => (
-        <DetectionCard key={index} data={item} />
-      ))}
+      <div style={{ width: "100%" }}>
+        {detections.map((item, index) => (
+          <DetectionCard key={index} data={item} />
+        ))}
+      </div>
       
-      <div style={{ marginBottom: "20px" }}>
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", marginTop: "20px" }}>
         <input 
           type="text"
           placeholder="Object name (e.g. Helmet)"
           value={newLabel}
           onChange={handleLabelChange}
+          style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc" }}
         />
         <button onClick={handleAdd}>Add Detection</button>
       </div>
 
-      <input 
-        ref={fileInputRef}
-        type="file" 
-        accept="image/*" 
-        onChange={handleFileChange} 
-      />
+      <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+        <input 
+          ref={fileInputRef}
+          type="file" 
+          accept="image/*" 
+          onChange={handleFileChange} 
+        />
 
-      {selectedFile && (
-        <div style={{ 
-          marginTop: "20px", 
-          display: "flex", 
-          flexDirection: "column", 
-          alignItems: "center", 
-          gap: "15px" 
-        }}>
-          <img 
-            src={previewUrl} 
-            alt="Selected file" 
-            style={{ 
-              maxWidth: "300px", 
-              borderRadius: "10px", 
-              boxShadow: "0 4px 8px rgba(0,0,0,0.2)" 
-            }} 
-          />
-          <button onClick={handleUpload}>Upload File</button>
-        </div>
-      )}
+        {selectedFile && (
+          <div style={{ 
+            marginTop: "20px", 
+            display: "flex", 
+            flexDirection: "column", 
+            alignItems: "center", 
+            gap: "15px" 
+          }}>
+            <img 
+              src={previewUrl} 
+              alt="Selected file" 
+              style={{ 
+                maxWidth: "300px", 
+                borderRadius: "10px", 
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)" 
+              }} 
+            />
+            <button onClick={handleUpload}>Upload File</button>
+          </div>
+        )}
+      </div>
     </main>
   )
 }
