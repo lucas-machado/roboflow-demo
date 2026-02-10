@@ -1,131 +1,36 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-
-interface Detection {
-  label: string;
-  confidence: number;
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-}
-
-interface DetectionCardProps {
-  data: Detection;
-}
-
-function DetectionCard({ data }: DetectionCardProps) {
-  return (
-    <div style={{ border: "1px solid #4A90E2", padding: "15px", borderRadius: "10px", margin: "10px" }}>
-      <h3>Object: {data.label}</h3>
-      <p>Confidence: {data.confidence}</p>
-      {data.x !== undefined && data.y !== undefined && (
-        <p>X: {data.x} Y: {data.y}</p>
-      )}
-      {data.width !== undefined && data.height !== undefined && (
-        <p>Width: {data.width} Height: {data.height}</p>
-      )}
-    </div>
-  )
-}
+import { useState, useRef } from 'react';
+import DetectionCard from '@/components/DetectionCard';
+import { useDetections } from '@/context/DetectionContext';
+import { useFileUpload } from '@/hooks/useFileUpload';
 
 export default function Home() {
-  const [error, setError] = useState<string | null>(null);
-  const [detections, setDetections] = useState<Detection[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchDetections = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/detections');
-      setDetections(response.data);
-    } catch (error) {
-      const message = (error as Error).message || 'An unknown error occurred';
-      console.error('Error fetching detections:', message);
-      setError(message);
-    }
-  }
-
-  useEffect(() => {
-    fetchDetections();
-  }, [])
-
+  const { detections, error, addDetection, fetchDetections } = useDetections();
+  const { selectedFile, setSelectedFile, previewUrl, uploadFile } = useFileUpload(fetchDetections);
+  
   const [newLabel, setNewLabel] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLabelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNewLabel(event.target.value);
   }
 
-  const handleAdd = () => {
-    const newItem: Detection = {
-      label: newLabel,
-      confidence: 1.0
-    }
-
-    const addDetection = async () => {
-      try {
-        const response = await axios.post('http://localhost:8000/detections', newItem);
-        if (response.status === 201) {
-          setDetections([...detections, newItem]);
-          setNewLabel("");
-        }
-      } catch (error) {
-        const message = (error as Error).message || 'An unknown error occurred';
-        console.error('Error adding detection:', message);
-        setError(message);
-      }
-    }
-
-    addDetection();
+  const handleAddClick = async () => {
+    if (!newLabel) return;
+    await addDetection(newLabel);
+    setNewLabel("");
   }
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length === 0) {
-      return;
-    }
-    setSelectedFile(event.target.files?.[0] || null)
+    const file = event.target.files?.[0] || null;
+    setSelectedFile(file);
   }
 
-  useEffect(() => {
-    if (!selectedFile) {
-      setPreviewUrl(undefined);
-      return;
-    }
-    const url = URL.createObjectURL(selectedFile)
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [selectedFile]);
-
-  const handleUpload = async () => {
-    if (!selectedFile) { return; }
-
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    try {
-      const response = await axios.post('http://localhost:8000/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      console.log("Server response:", response.data);
-
-      if (response.status === 201) {
-        fetchDetections();
-        setSelectedFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
-    } catch (error) {
-      const message = (error as Error).message || 'An unknown error occurred';
-      console.error('Error uploading file:', message);
-      setError(message);
+  const onUpload = async () => {
+    const success = await uploadFile();
+    if (success && fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   }
 
@@ -171,7 +76,7 @@ export default function Home() {
           onChange={handleLabelChange}
           style={{ padding: "8px", borderRadius: "5px", border: "1px solid #ccc" }}
         />
-        <button onClick={handleAdd}>Add Detection</button>
+        <button onClick={handleAddClick}>Add Detection</button>
       </div>
 
       <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
@@ -199,7 +104,7 @@ export default function Home() {
                 boxShadow: "0 4px 8px rgba(0,0,0,0.2)" 
               }} 
             />
-            <button onClick={handleUpload}>Upload File</button>
+            <button onClick={onUpload}>Upload File</button>
           </div>
         )}
       </div>

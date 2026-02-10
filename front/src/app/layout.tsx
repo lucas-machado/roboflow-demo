@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { DetectionProvider } from "@/context/DetectionContext";
 
 export const metadata: Metadata = {
   title: "Roboflow Training Lab",
@@ -13,7 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <DetectionProvider>
+          {children}
+        </DetectionProvider>
+      </body>
     </html>
   );
 }
