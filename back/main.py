@@ -13,8 +13,9 @@ import numpy as np
 import cv2
 
 
+# Workflows devem usar detect.roboflow.com (serverless retorna 405 para workflows)
 client = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
+    api_url="https://detect.roboflow.com",
     api_key=os.getenv("ROBOFLOW_API_KEY"),
 )
 

@@ -16,12 +16,14 @@ export function useFileUpload(onSuccess: () => void) {
   }, [selectedFile]);
 
   const uploadFile = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) return false;
     const formData = new FormData();
     formData.append("file", selectedFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/upload', formData);
+      const response = await axios.post('http://localhost:8000/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       if (response.status === 201) {
         onSuccess();
         setSelectedFile(null);

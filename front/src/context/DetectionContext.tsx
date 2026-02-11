@@ -1,8 +1,6 @@
-"use client";
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { Detection } from '@/components/DetectionCard';
+import type { Detection } from '@/components/DetectionCard';
 
 interface DetectionContextType {
   detections: Detection[];
@@ -21,7 +19,7 @@ export function DetectionProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await axios.get('http://localhost:8000/detections');
       setDetections(response.data);
-    } catch (err) {
+    } catch {
       setError("Falha ao carregar detecções.");
     }
   };
@@ -30,13 +28,15 @@ export function DetectionProvider({ children }: { children: React.ReactNode }) {
     const newItem: Detection = { label, confidence: 1.0, x: 0, y: 0, width: 0, height: 0 };
     try {
       const response = await axios.post('http://localhost:8000/detections', newItem);
-      if (response.status === 201) setDetections(prev => [...prev, newItem]);
-    } catch (err) {
+      if (response.status === 201) setDetections((prev) => [...prev, newItem]);
+    } catch {
       setError("Erro ao adicionar manualmente.");
     }
   };
 
-  useEffect(() => { fetchDetections(); }, []);
+  useEffect(() => {
+    fetchDetections();
+  }, []);
 
   return (
     <DetectionContext.Provider value={{ detections, error, fetchDetections, addDetection }}>
